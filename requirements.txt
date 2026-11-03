@@ -1,0 +1,8 @@
+Flask
+firebase-admin
+pandas
+seaborn
+matplotlib
+requests
+google-genai
+python-dotenv

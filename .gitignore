@@ -1,0 +1,21 @@
+# Environment variables and secrets
+.env
+.env.*
+
+# Firebase credentials
+serviceAccountKey.json
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+.venv/
+
+# Node modules
+node_modules/
+
+# System files
+.DS_Store
+Thumbs.db

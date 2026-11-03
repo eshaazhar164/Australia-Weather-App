@@ -1,0 +1,1584 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Australia Weather Dashboard</title>
+
+    <!-- Markdown Rendering Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2454a6;
+            --primary-dark: #15345f;
+            --navy: #102b4c;
+            --background: #eef3fa;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #dce5f0;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 25px;
+            background: linear-gradient(135deg, #edf2fa, #f7f9fd);
+            color: var(--text);
+            line-height: 1.65;
+            font-size: 16px;
+        }
+
+        .page-container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        /* Main Dashboard Header */
+
+        .header {
+            background: linear-gradient(120deg, #102b4c, #1d4c80, #17365d);
+            color: white;
+            padding: 38px 25px;
+            border-radius: 17px;
+            margin-bottom: 23px;
+            text-align: center;
+            box-shadow: 0 9px 25px rgba(16, 43, 76, 0.18);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: clamp(28px, 3vw, 40px);
+            font-weight: 800;
+            line-height: 1.3;
+            margin: 0 0 10px;
+            letter-spacing: 0.2px;
+        }
+
+        .header p {
+            color: #dce9fa;
+            font-size: 17px;
+            margin: 0;
+        }
+
+        .header-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.13);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            padding: 7px 19px;
+            margin-bottom: 13px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        /* General Sections */
+
+        .section {
+            background: var(--white);
+            padding: 25px;
+            margin: 21px 0;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            box-shadow: 0 5px 18px rgba(30, 55, 90, 0.055);
+        }
+
+        .section h2 {
+            color: var(--primary-dark);
+            font-size: 26px;
+            font-weight: 800;
+            margin: 0 0 7px;
+            line-height: 1.4;
+        }
+
+        .section-intro {
+            color: var(--muted);
+            font-size: 15px;
+            margin: 0 0 19px;
+        }
+
+        /* Summary Cards */
+
+        .summary-container {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 17px;
+            margin-top: 19px;
+        }
+
+        .summary-card {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(145deg, #ffffff, #f3f7ff);
+            border: 1px solid #dce6f5;
+            border-top: 4px solid var(--primary);
+            border-radius: 13px;
+            padding: 22px;
+            min-width: 0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 9px 22px rgba(36, 79, 150, 0.11);
+        }
+
+        .summary-card h3 {
+            color: #52627a;
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.5;
+            margin: 0 0 9px;
+        }
+
+        .summary-card p {
+            color: var(--primary);
+            font-size: clamp(27px, 2.5vw, 35px);
+            font-weight: 800;
+            line-height: 1.3;
+            overflow-wrap: anywhere;
+            margin: 0;
+        }
+
+        .card-note {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 9px;
+        }
+
+        /* Buttons and Forms */
+
+        form {
+            margin: 15px 0 0;
+        }
+
+        label {
+            display: block;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        select,
+        button {
+            font-family: inherit;
+            font-size: 15px;
+            min-height: 45px;
+            border-radius: 8px;
+        }
+
+        select {
+            min-width: 210px;
+            max-width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            color: var(--text);
+        }
+
+        select:focus {
+            outline: 3px solid rgba(49, 87, 200, 0.15);
+            border-color: var(--primary);
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 11px 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+        }
+
+        button:focus-visible {
+            outline: 3px solid #9bb5ff;
+            outline-offset: 3px;
+        }
+
+        .refresh-button {
+            background: #173b75;
+            padding: 13px 23px;
+        }
+
+        .refresh-button:hover {
+            background: #102c5b;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: end;
+            gap: 12px;
+        }
+
+        .form-row form {
+            margin-top: 0;
+        }
+
+        /* Status Messages */
+
+        .message {
+            background: #e8f7ed;
+            color: #176534;
+            border: 1px solid #bce7c8;
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin: 14px 0;
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+
+        /* Weather Table */
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            margin-top: 18px;
+        }
+
+        table {
+            width: 100%;
+            min-width: 1250px;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: white;
+        }
+
+        th,
+        td {
+            padding: 14px 13px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+            font-size: 14px;
+        }
+
+        th {
+            background: #1d4380;
+            color: white;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        th:first-child {
+            border-top-left-radius: 10px;
+        }
+
+        th:last-child {
+            border-top-right-radius: 10px;
+        }
+
+        td:first-child {
+            color: var(--primary-dark);
+            font-weight: 800;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f7f9fe;
+        }
+
+        tbody tr:hover {
+            background: #eaf0ff;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Charts */
+
+        .chart-container {
+            background: #fbfcff;
+            border: 1px solid #e2e9f7;
+            border-radius: 14px;
+            padding: 24px;
+            margin-top: 22px;
+        }
+
+        .chart-container h3 {
+            color: var(--primary-dark);
+            font-size: 23px;
+            font-weight: 800;
+            line-height: 1.4;
+            margin: 0 0 8px;
+        }
+
+        .chart-description {
+            color: var(--muted);
+            font-size: 15px;
+            margin: 0 0 18px;
+        }
+
+        .chart-container img {
+            display: block;
+            width: 100%;
+            max-width: 1000px;
+            height: auto;
+            margin: 0 auto;
+            border-radius: 8px;
+        }
+
+        /* Empty State and Footer */
+
+        .no-data {
+            background: #fff7ed;
+            color: #9a3412;
+            border: 1px solid #fed7aa;
+            padding: 16px;
+            border-radius: 9px;
+            font-weight: 700;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--muted);
+            padding: 22px 10px;
+            font-size: 14px;
+        }
+
+        .footer p {
+            margin: 0;
+        }
+
+        /* Floating Chatbot Button */
+
+        .chat-launcher {
+            position: fixed;
+            right: 28px;
+            bottom: 25px;
+            z-index: 1000;
+            width: 70px;
+            height: 70px;
+            min-height: 70px;
+            padding: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #2465bd, #102d59);
+            color: white;
+            border: 3px solid rgba(255, 255, 255, 0.65);
+            box-shadow: 0 7px 25px rgba(20, 55, 110, 0.35);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .chat-launcher:hover {
+            transform: translateY(-4px);
+            background: linear-gradient(135deg, #3479d4, #173b75);
+            box-shadow: 0 10px 28px rgba(20, 55, 110, 0.42);
+        }
+
+        .chat-launcher svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Chatbot Popup Window */
+
+        .chat-panel {
+            position: fixed;
+            right: 28px;
+            bottom: 112px;
+            z-index: 999;
+            width: 480px;
+            max-width: calc(100vw - 32px);
+            height: 700px;
+            max-height: calc(100vh - 135px);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            background: linear-gradient(160deg, #e8f0fc, #dce8f7);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            box-shadow: 0 16px 50px rgba(12, 36, 72, 0.28);
+        }
+
+        .chat-panel.open {
+            display: flex;
+            animation: chatAppear 0.22s ease-out;
+        }
+
+        @keyframes chatAppear {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Chatbot Header */
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 19px 20px;
+            background: linear-gradient(120deg, #102b4c, #1e5594, #173b75);
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 13px rgba(15, 42, 78, 0.2);
+        }
+
+        .chat-header-info {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            min-width: 0;
+        }
+
+        .chat-avatar {
+            width: 47px;
+            height: 47px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.17);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-size: 25px;
+            color: #d9edff;
+        }
+
+        .chat-header h3 {
+            font-size: 19px;
+            font-weight: 800;
+            margin: 0;
+            color: white;
+        }
+
+        .chat-header p {
+            font-size: 13px;
+            color: #d7e8ff;
+            margin: 3px 0 0;
+        }
+
+        .chat-close {
+            width: 37px;
+            height: 37px;
+            min-height: 37px;
+            padding: 0;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        .chat-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Chat Conversation Area */
+
+        .chat-window {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+            padding: 22px;
+            background: linear-gradient(160deg, #e8eff9, #dce7f4);
+            scrollbar-width: thin;
+            scrollbar-color: #9db4d2 transparent;
+        }
+
+        .welcome-card {
+            width: 100%;
+            padding: 23px 19px;
+            margin: 2px 0 5px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 5px 17px rgba(34, 66, 110, 0.09);
+        }
+
+        .welcome-icon {
+            width: 49px;
+            height: 49px;
+            margin: 0 auto 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2465bd, #102d59);
+            color: white;
+            font-size: 25px;
+            box-shadow: 0 4px 12px rgba(36, 85, 155, 0.25);
+        }
+
+        .welcome-card h2 {
+            color: #173b75;
+            font-size: 25px;
+            font-weight: 800;
+            margin: 0 0 8px;
+        }
+
+        .welcome-card p {
+            color: #526780;
+            font-size: 14px;
+            line-height: 1.65;
+            margin: 0;
+        }
+
+        /* Chat Messages */
+
+        .chat-message {
+            max-width: 94%;
+            padding: 16px 19px;
+            border-radius: 15px;
+            overflow-wrap: anywhere;
+            font-size: 16px;
+            line-height: 1.75;
+            box-shadow: 0 3px 9px rgba(30, 55, 90, 0.06);
+        }
+
+        .chat-message.assistant {
+            align-self: flex-start;
+            color: #26384e;
+            background: white;
+            border: 1px solid #dce5f0;
+            border-bottom-left-radius: 4px;
+            white-space: normal;
+        }
+
+        .chat-message.user {
+            align-self: flex-end;
+            color: white;
+            background: linear-gradient(135deg, #2865b5, #173b75);
+            border-bottom-right-radius: 4px;
+            white-space: pre-wrap;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* Formatted Gemini Response */
+
+        .chat-message.assistant h1,
+        .chat-message.assistant h2,
+        .chat-message.assistant h3,
+        .chat-message.assistant h4 {
+            color: #15345f;
+            font-weight: 800;
+            line-height: 1.4;
+            margin-top: 19px;
+            margin-bottom: 10px;
+        }
+
+        .chat-message.assistant h1 {
+            font-size: 23px;
+            border-bottom: 2px solid #e1eaf6;
+            padding-bottom: 8px;
+        }
+
+        .chat-message.assistant h2 {
+            font-size: 21px;
+        }
+
+        .chat-message.assistant h3 {
+            font-size: 18px;
+        }
+
+        .chat-message.assistant h4 {
+            font-size: 16px;
+        }
+
+        .chat-message.assistant > :first-child {
+            margin-top: 0;
+        }
+
+        .chat-message.assistant p {
+            margin: 0 0 13px;
+            line-height: 1.8;
+        }
+
+        .chat-message.assistant > :last-child {
+            margin-bottom: 0;
+        }
+
+        .chat-message.assistant strong {
+            color: #173b75;
+            font-weight: 800;
+        }
+
+        .chat-message.assistant em {
+            color: #425b7a;
+        }
+
+        .chat-message.assistant ul,
+        .chat-message.assistant ol {
+            padding-left: 24px;
+            margin: 9px 0 16px;
+        }
+
+        .chat-message.assistant li {
+            padding-left: 3px;
+            margin-bottom: 8px;
+            line-height: 1.75;
+        }
+
+        .chat-message.assistant li::marker {
+            color: #2865b5;
+            font-weight: 800;
+        }
+
+        .chat-message.assistant blockquote {
+            margin: 13px 0;
+            padding: 10px 14px;
+            border-left: 4px solid #4b7fc0;
+            background: #f1f6fd;
+            border-radius: 5px;
+            color: #425b7a;
+        }
+
+        .chat-message.assistant code {
+            background: #edf2f9;
+            color: #173b75;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .chat-message.assistant pre {
+            background: #edf2f9;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .chat-message.assistant pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .chat-message.assistant hr {
+            border: none;
+            border-top: 1px solid #dce5f0;
+            margin: 17px 0;
+        }
+
+        .chat-message.assistant table {
+            display: block;
+            width: 100%;
+            min-width: 0;
+            overflow-x: auto;
+            border-collapse: collapse;
+            margin: 12px 0;
+        }
+
+        .chat-message.assistant th,
+        .chat-message.assistant td {
+            white-space: normal;
+            text-align: left;
+            padding: 9px 10px;
+            font-size: 14px;
+            border: 1px solid #dce5f0;
+        }
+
+        .chat-message.assistant th {
+            background: #eaf1fb;
+            color: #173b75;
+        }
+
+        /* Suggested Questions */
+
+        .suggestions {
+            flex-shrink: 0;
+            padding: 15px 19px 13px;
+            background: rgba(255, 255, 255, 0.84);
+            border-top: 1px solid rgba(210, 224, 242, 0.9);
+        }
+
+        .suggestions-title {
+            color: #526780;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.9px;
+            text-transform: uppercase;
+            margin: 0 0 11px;
+        }
+
+        .suggestion-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .suggestion-button {
+            width: 100%;
+            min-height: 39px;
+            padding: 9px 13px;
+            border: 1px solid #b9cde8;
+            border-radius: 9px;
+            background: linear-gradient(110deg, #173b75, #24569a);
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: left;
+            line-height: 1.4;
+            box-shadow: 0 3px 8px rgba(22, 58, 108, 0.12);
+        }
+
+        .suggestion-button::before {
+            content: "✧";
+            margin-right: 9px;
+            color: #cce4ff;
+            font-size: 15px;
+        }
+
+        .suggestion-button:hover {
+            background: linear-gradient(110deg, #24569a, #3479c5);
+            border-color: #8eacd4;
+            transform: translateY(-1px);
+        }
+
+        /* Chat Input */
+
+        .chat-input-area {
+            padding: 13px 17px 8px;
+            background: rgba(255, 255, 255, 0.95);
+            border-top: 1px solid #dce5f0;
+        }
+
+        .chat-form {
+            display: flex;
+            align-items: stretch;
+            gap: 9px;
+            margin: 0;
+        }
+
+        .chat-form textarea {
+            flex: 1;
+            min-width: 0;
+            min-height: 47px;
+            max-height: 100px;
+            resize: none;
+            padding: 12px 15px;
+            border: 1px solid #b9cce5;
+            border-radius: 25px;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.5;
+            background: #f9fbff;
+            color: var(--text);
+        }
+
+        .chat-form textarea:focus {
+            outline: 3px solid rgba(49, 87, 200, 0.13);
+            border-color: var(--primary);
+        }
+
+        .chat-form button {
+            min-width: 49px;
+            width: 49px;
+            min-height: 47px;
+            padding: 8px;
+            border-radius: 50%;
+            font-size: 19px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #2465bd, #102d59);
+        }
+
+        .chat-form button:hover {
+            background: linear-gradient(135deg, #3479d4, #173b75);
+        }
+
+        .chat-form button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .chat-status {
+            min-height: 18px;
+            margin: 5px 7px 0;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .chat-footer-note {
+            text-align: center;
+            color: #71839a;
+            font-size: 11px;
+            padding: 3px 12px 11px;
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        /* Responsive Layout */
+
+        @media (max-width: 1000px) {
+            .summary-container {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            body {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+
+            .header {
+                padding: 27px 16px;
+                border-radius: 13px;
+            }
+
+            .header h1 {
+                font-size: 26px;
+            }
+
+            .header p {
+                font-size: 14px;
+            }
+
+            .section {
+                padding: 19px 15px;
+                margin: 16px 0;
+                border-radius: 12px;
+            }
+
+            .section h2 {
+                font-size: 22px;
+            }
+
+            .summary-container {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .summary-card {
+                padding: 19px;
+            }
+
+            .summary-card p {
+                font-size: 29px;
+            }
+
+            .form-row {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .form-row form,
+            .form-row button,
+            .form-row select {
+                width: 100%;
+            }
+
+            select {
+                min-width: 0;
+            }
+
+            .chart-container {
+                padding: 16px 10px;
+                margin-top: 18px;
+            }
+
+            .chart-container h3 {
+                font-size: 19px;
+            }
+
+            .chart-description {
+                font-size: 13px;
+            }
+
+            .table-container {
+                margin-top: 14px;
+            }
+
+            .chat-launcher {
+                right: 17px;
+                bottom: 17px;
+                width: 60px;
+                height: 60px;
+                min-height: 60px;
+            }
+
+            .chat-panel {
+                right: 10px;
+                bottom: 87px;
+                width: calc(100vw - 20px);
+                max-width: none;
+                height: min(720px, calc(100vh - 105px));
+                max-height: calc(100vh - 105px);
+                border-radius: 16px;
+            }
+
+            .chat-header {
+                padding: 15px;
+            }
+
+            .chat-header h3 {
+                font-size: 17px;
+            }
+
+            .chat-window {
+                padding: 14px;
+            }
+
+            .welcome-card {
+                padding: 18px 13px;
+            }
+
+            .welcome-card h2 {
+                font-size: 22px;
+            }
+
+            .suggestions {
+                padding: 12px 13px 10px;
+            }
+
+            .suggestion-button {
+                font-size: 12px;
+                min-height: 36px;
+            }
+
+            .chat-message {
+                font-size: 15px;
+                max-width: 97%;
+                padding: 14px 15px;
+            }
+
+            .chat-message.assistant h1 {
+                font-size: 21px;
+            }
+
+            .chat-message.assistant h2 {
+                font-size: 19px;
+            }
+
+            .chat-message.assistant h3 {
+                font-size: 17px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                transition: none !important;
+                animation: none !important;
+                scroll-behavior: auto !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="page-container">
+
+    <!-- Main Dashboard Header -->
+    <header class="header">
+        <div class="header-badge">Live Weather Dashboard</div>
+        <h1>AUSTRALIA WEATHER MONITORING DASHBOARD</h1>
+        <p>Weather Monitoring And Visualization For Seven Australian Cities</p>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+        {% for message in messages %}
+            <div class="message" role="status">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <!-- Weather Summary -->
+    <section class="section">
+        <h2>Weather Summary</h2>
+        <p class="section-intro">
+            An overview of the weather information currently displayed.
+        </p>
+
+        <div class="summary-container">
+
+            <div class="summary-card">
+                <h3>Total Cities</h3>
+                <p>{{ total_cities }}</p>
+                <div class="card-note">Cities in current view</div>
+            </div>
+
+            <div class="summary-card">
+                <h3>Average Temperature</h3>
+                <p>
+                    {% if average_temperature is not none %}
+                        {{ average_temperature }} °C
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </p>
+                <div class="card-note">Mean current temperature</div>
+            </div>
+
+            <div class="summary-card">
+                <h3>Highest Temperature</h3>
+                <p>
+                    {% if highest_temperature is not none %}
+                        {{ highest_temperature }} °C
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </p>
+                <div class="card-note">Highest current temperature</div>
+            </div>
+
+            <div class="summary-card">
+                <h3>Average Humidity</h3>
+                <p>
+                    {% if average_humidity is not none %}
+                        {{ average_humidity }}%
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </p>
+                <div class="card-note">Mean relative humidity</div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Refresh Weather -->
+    <section class="section">
+        <h2>Refresh Weather Data</h2>
+        <p class="section-intro">
+            Retrieve the latest available weather information and save it
+            to Firebase Realtime Database.
+        </p>
+
+        <form action="/refresh" method="get">
+            <button class="refresh-button" type="submit">
+                Refresh Weather Data
+            </button>
+        </form>
+    </section>
+
+    <!-- City Filter -->
+    <section class="section">
+        <h2>Filter Weather by City</h2>
+        <p class="section-intro">
+            Select a city to view its weather records and corresponding charts.
+        </p>
+
+        <form action="/" method="get">
+            <div class="form-row">
+                <div>
+                    <label for="city">Select City</label>
+
+                    <select name="city" id="city">
+                        <option value="All"
+                            {% if selected_city == "All" %}selected{% endif %}>
+                            All Cities
+                        </option>
+
+                        {% for city in cities %}
+                            <option value="{{ city }}"
+                                {% if selected_city == city %}selected{% endif %}>
+                                {{ city }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit">Apply Filter</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Weather Data Table -->
+    <section class="section">
+        <h2>Weather Data</h2>
+        <p class="section-intro">
+            Detailed weather measurements for the selected city or cities.
+            Scroll horizontally to view all columns.
+        </p>
+
+        {% if weather_data %}
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>City</th>
+                            <th>Current Temp (°C)</th>
+                            <th>Feels Like (°C)</th>
+                            <th>Minimum (°C)</th>
+                            <th>Maximum (°C)</th>
+                            <th>Condition</th>
+                            <th>UV Index</th>
+                            <th>Humidity (%)</th>
+                            <th>Wind Speed (km/h)</th>
+                            <th>Sunshine (hours)</th>
+                            <th>Daytime</th>
+                            <th>Last Updated</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in weather_data %}
+                            <tr>
+                                <td>{{ item.city }}</td>
+                                <td>{{ item.current_temperature }}</td>
+                                <td>{{ item.feels_like }}</td>
+                                <td>{{ item.minimum_temperature }}</td>
+                                <td>{{ item.maximum_temperature }}</td>
+                                <td>{{ item.weather_condition }}</td>
+                                <td>{{ item.uv_index }}</td>
+                                <td>{{ item.humidity }}</td>
+                                <td>{{ item.wind_speed }}</td>
+                                <td>{{ item.sunshine_hours }}</td>
+                                <td>{{ "Yes" if item.is_daytime else "No" }}</td>
+                                <td>{{ item.last_updated }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="no-data">
+                No weather data available. Click Refresh Weather Data.
+            </p>
+        {% endif %}
+    </section>
+
+    <!-- Weather Charts -->
+    <section class="section">
+        <h2>Weather Data Visualizations</h2>
+        <p class="section-intro">
+            Compare temperature, humidity and UV Index across the selected
+            Australian cities.
+        </p>
+
+        {% if temperature_chart %}
+            <div class="chart-container">
+                <h3>01. Temperature Comparison</h3>
+                <p class="chart-description">
+                    Compares current temperatures across the selected cities.
+                </p>
+                <img
+                    src="data:image/png;base64,{{ temperature_chart }}"
+                    alt="Bar chart comparing current temperatures across Australian cities">
+            </div>
+        {% endif %}
+
+        {% if humidity_chart %}
+            <div class="chart-container">
+                <h3>02. Humidity Comparison</h3>
+                <p class="chart-description">
+                    Compares relative humidity levels across the selected cities.
+                </p>
+                <img
+                    src="data:image/png;base64,{{ humidity_chart }}"
+                    alt="Bar chart comparing relative humidity across Australian cities">
+            </div>
+        {% endif %}
+
+        {% if uv_chart %}
+            <div class="chart-container">
+                <h3>03. UV Index Comparison</h3>
+                <p class="chart-description">
+                    Compares current UV Index values across the selected cities.
+                </p>
+                <img
+                    src="data:image/png;base64,{{ uv_chart }}"
+                    alt="Bar chart comparing UV Index across Australian cities">
+            </div>
+        {% endif %}
+
+        {% if not temperature_chart and not humidity_chart and not uv_chart %}
+            <p class="no-data">
+                No charts available. Refresh the weather data first.
+            </p>
+        {% endif %}
+    </section>
+
+    <!-- Project Information -->
+    <section class="section">
+        <h2>About This Dashboard</h2>
+
+        <p class="section-intro">
+            The Australia Weather Monitoring Dashboard collects weather
+            information for seven Australian cities using the Open-Meteo
+            weather API. Flask manages the web application, Firebase
+            Realtime Database stores weather records, and Pandas and
+            Seaborn support data processing and visualization.
+        </p>
+
+        <p>
+            Users can filter weather records by city, review summary statistics,
+            compare weather conditions through charts, and refresh the stored
+            weather information.
+        </p>
+    </section>
+
+    <footer class="footer">
+        <p>Australia Weather Monitoring System | Flask and Firebase</p>
+    </footer>
+
+</div>
+
+<!-- Floating Chatbot Button -->
+<button
+    type="button"
+    id="chat-launcher"
+    class="chat-launcher"
+    aria-label="Open AI Weather Assistant"
+    aria-expanded="false"
+    aria-controls="chat-panel"
+    title="Chat with AI Weather Assistant"
+>
+    <svg viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true">
+        <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8
+                 8.5 8.5 0 0 1-7.6 4.7
+                 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7
+                 a8.4 8.4 0 0 1-.9-3.8
+                 8.5 8.5 0 0 1 4.7-7.6
+                 8.4 8.4 0 0 1 3.8-.9h.5
+                 a8.5 8.5 0 0 1 8 8v.5z"/>
+        <path d="M8 12h.01M12 12h.01M16 12h.01"/>
+    </svg>
+</button>
+
+<!-- Chatbot Popup -->
+<aside
+    id="chat-panel"
+    class="chat-panel"
+    role="dialog"
+    aria-label="AI Weather Assistant"
+    aria-hidden="true"
+>
+    <!-- Chatbot Header -->
+    <div class="chat-header">
+        <div class="chat-header-info">
+            <div class="chat-avatar">✦</div>
+
+            <div>
+                <h3>AI Weather Assistant</h3>
+                <p>Your personalized Australian weather guide</p>
+            </div>
+        </div>
+
+        <button
+            type="button"
+            id="chat-close"
+            class="chat-close"
+            aria-label="Close chatbot"
+            title="Close"
+        >
+            &times;
+        </button>
+    </div>
+
+    <!-- Chat Conversation -->
+    <div
+        id="chat-window"
+        class="chat-window"
+        role="log"
+        aria-live="polite"
+        aria-label="Chat conversation"
+    >
+        <div class="welcome-card" id="welcome-card">
+            <div class="welcome-icon">✦</div>
+
+            <h2>Hello Esha!</h2>
+
+            <p>
+                Welcome to your AI Weather Assistant.
+                Ask me anything about temperatures, humidity,
+                UV Index and weather conditions across
+                Australia's seven cities.
+            </p>
+        </div>
+    </div>
+
+    <!-- Suggested Questions -->
+    <div class="suggestions" id="suggestions">
+        <p class="suggestions-title">Suggested Questions</p>
+
+        <div class="suggestion-list">
+            <button type="button" class="suggestion-button">
+                Compare temperatures across all seven cities.
+            </button>
+
+            <button type="button" class="suggestion-button">
+                Which city has the highest humidity?
+            </button>
+
+            <button type="button" class="suggestion-button">
+                Compare the UV Index of all cities.
+            </button>
+
+            <button type="button" class="suggestion-button">
+                Summarize the current weather conditions.
+            </button>
+        </div>
+    </div>
+
+    <!-- Chat Input -->
+    <div class="chat-input-area">
+        <form id="chat-form" class="chat-form">
+            <textarea
+                id="chat-input"
+                name="message"
+                rows="1"
+                maxlength="1000"
+                placeholder="Ask about Australian weather..."
+                aria-label="Type your weather question"
+                required
+            ></textarea>
+
+            <button
+                id="chat-send"
+                type="submit"
+                aria-label="Send message"
+                title="Send message"
+            >
+                ↑
+            </button>
+        </form>
+
+        <p id="chat-status" class="chat-status" role="status"></p>
+    </div>
+
+    <div class="chat-footer-note">
+        AI responses may occasionally be inaccurate. Check weather data for details.
+    </div>
+</aside>
+
+<script>
+    // Chatbot Elements
+
+    const chatLauncher = document.getElementById("chat-launcher");
+    const chatPanel = document.getElementById("chat-panel");
+    const chatClose = document.getElementById("chat-close");
+
+    const chatForm = document.getElementById("chat-form");
+    const chatInput = document.getElementById("chat-input");
+    const chatWindow = document.getElementById("chat-window");
+    const chatSend = document.getElementById("chat-send");
+    const chatStatus = document.getElementById("chat-status");
+
+    const suggestionButtons = document.querySelectorAll(".suggestion-button");
+
+    const chatHistory = [];
+
+    // Configure Markdown Rendering
+
+    if (window.marked) {
+        marked.setOptions({
+            breaks: true,
+            gfm: true
+        });
+    }
+
+    // Open Chatbot
+
+    function openChatbot() {
+        chatPanel.classList.add("open");
+        chatPanel.setAttribute("aria-hidden", "false");
+        chatLauncher.setAttribute("aria-expanded", "true");
+        chatInput.focus();
+    }
+
+    // Close Chatbot
+
+    function closeChatbot() {
+        chatPanel.classList.remove("open");
+        chatPanel.setAttribute("aria-hidden", "true");
+        chatLauncher.setAttribute("aria-expanded", "false");
+        chatLauncher.focus();
+    }
+
+    chatLauncher.addEventListener("click", function () {
+        if (chatPanel.classList.contains("open")) {
+            closeChatbot();
+        } else {
+            openChatbot();
+        }
+    });
+
+    chatClose.addEventListener("click", closeChatbot);
+
+    // Close Chatbot Using Escape Key
+
+    document.addEventListener("keydown", function (event) {
+        if (
+            event.key === "Escape" &&
+            chatPanel.classList.contains("open")
+        ) {
+            closeChatbot();
+        }
+    });
+
+    // Add Message to Chat Window
+
+    function addChatMessage(message, sender) {
+        const messageElement = document.createElement("div");
+
+        messageElement.className = `chat-message ${sender}`;
+
+        if (sender === "assistant" && window.marked && window.DOMPurify) {
+            const formattedHTML = marked.parse(message, {
+                breaks: true,
+                gfm: true
+            });
+
+            messageElement.innerHTML = DOMPurify.sanitize(formattedHTML);
+        } else {
+            messageElement.textContent = message;
+        }
+
+        chatWindow.appendChild(messageElement);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    // Send Message to Gemini Through Flask
+
+    async function sendChatMessage(message) {
+        const cleanMessage = message.trim();
+
+        if (!cleanMessage || chatSend.disabled) {
+            return;
+        }
+
+        addChatMessage(cleanMessage, "user");
+
+        const previousHistory = [...chatHistory];
+
+        chatHistory.push({
+            role: "user",
+            content: cleanMessage
+        });
+
+        chatSend.disabled = true;
+        chatInput.disabled = true;
+
+        chatStatus.textContent = "Gemini is preparing a response...";
+
+        try {
+            const response = await fetch("/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: cleanMessage,
+                    history: previousHistory
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    result.error || "The chatbot could not process your message."
+                );
+            }
+
+            const answer = result.response || "No response was received.";
+
+            addChatMessage(answer, "assistant");
+
+            chatHistory.push({
+                role: "model",
+                content: answer
+            });
+
+            // Keep Recent Conversation History
+
+            if (chatHistory.length > 20) {
+                chatHistory.splice(0, chatHistory.length - 20);
+            }
+
+            chatStatus.textContent = "";
+
+        } catch (error) {
+            // Remove Unanswered Question from Conversation History
+
+            chatHistory.pop();
+
+            addChatMessage(
+                error.message || "Unable to contact the chatbot. Please try again.",
+                "assistant"
+            );
+
+            chatStatus.textContent = "Please try sending your message again.";
+
+        } finally {
+            chatSend.disabled = false;
+            chatInput.disabled = false;
+            chatInput.focus();
+        }
+    }
+
+    // Send Message Using Input Form
+
+    chatForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const message = chatInput.value.trim();
+
+        if (!message || chatSend.disabled) {
+            return;
+        }
+
+        chatInput.value = "";
+
+        await sendChatMessage(message);
+    });
+
+    // Suggested Questions
+
+    suggestionButtons.forEach(function (button) {
+        button.addEventListener("click", async function () {
+            const question = button.textContent.trim();
+
+            await sendChatMessage(question);
+        });
+    });
+
+    // Enter to Send, Shift + Enter for a New Line
+
+    chatInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            chatForm.requestSubmit();
+        }
+    });
+</script>
+
+</body>
+</html>
