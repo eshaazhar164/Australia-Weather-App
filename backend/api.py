@@ -1,8 +1,10 @@
+
 from flask import Flask, jsonify, request
 import firebase_admin
 from firebase_admin import credentials, db
 from pathlib import Path
 import json
+import os
 
 from weather_service import get_all_weather
 from charts import (
@@ -34,12 +36,20 @@ firebase_error = None
 
 try:
     if not firebase_admin._apps:
-        if not KEY_PATH.exists():
+        firebase_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+
+        if firebase_json:
+            service_account_info = json.loads(firebase_json)
+            cred = credentials.Certificate(service_account_info)
+
+        elif KEY_PATH.exists():
+            cred = credentials.Certificate(str(KEY_PATH))
+
+        else:
             raise FileNotFoundError(
-                "Firebase service account key is missing."
+                "Firebase credentials are missing."
             )
 
-        cred = credentials.Certificate(str(KEY_PATH))
         firebase_admin.initialize_app(
             cred,
             {"databaseURL": DATABASE_URL}
@@ -107,16 +117,12 @@ def dashboard():
 
         if weather_data:
             try:
-                temperature_chart = create_temperature_chart(
-                    weather_data
-                )
+                temperature_chart = create_temperature_chart(weather_data)
             except Exception as error:
                 print("Temperature chart error:", error)
 
             try:
-                humidity_chart = create_humidity_chart(
-                    weather_data
-                )
+                humidity_chart = create_humidity_chart(weather_data)
             except Exception as error:
                 print("Humidity chart error:", error)
 
@@ -195,7 +201,6 @@ def refresh_weather():
         }), 500
 
 
-# Gemini AI Chatbot API
 @app.route("/api/chat", methods=["POST"])
 def chat():
     if firebase_error:
